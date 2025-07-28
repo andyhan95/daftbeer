@@ -6,40 +6,45 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct MenuView: View {
+    @State private var position = MapCameraPosition.region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 34.0765, longitude: -118.3088),
+            span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2)
+        ) // By default, the map is centered at the now defunct Southland Beer as an homage
+    )
+    @State var barItems:[Bar] = [Bar]()
+    var dataService = DataService()
+    
     var body: some View {
         ZStack {
             Color(.gray).ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 20.0) {
-                Image("hike").resizable().cornerRadius(15.0).aspectRatio(contentMode: .fit)
-                HStack {
-                    Text("Switzer Falls").font(.largeTitle).fontWeight(.semibold).foregroundColor(Color.white)
-                    Spacer()
-                    VStack {
-                        HStack {
-                            Image(systemName: "star.fill")
-                            Image(systemName: "star.fill")
-                            Image(systemName: "star.fill")
-                            Image(systemName: "star.fill")
-                            Image(systemName: "star.leadinghalf.filled")
-                        }.foregroundColor(.orange).font(.caption)
-                        Text("361 Reviews").font(.caption)
+            VStack {
+                Map(position: $position) {
+                        }
+                List(barItems) { item in
+                            VStack(alignment: .leading) {
+                                HStack {
+                                    Text(item.name).bold()
+                                    Spacer()
+                                    Text("\(item.price.formatted(.currency(code: "USD"))) and up")
+                                }
+                                HStack {
+                                    Text(item.location).font(.caption)
+                                    Spacer()
+                                    Text(item.type).font(.caption)
+                                }
+                            }.listRowBackground(Color(.lightGray))
+                        }.listStyle(.plain).onAppear(){
+                            barItems = dataService.getData()
+                        }
                     }
                 }
-                Text("A scenic, moderate-intesity hike with breathtaking views of the Switzer River and the surrounding mountains.")
-                    .font(.body)
-                    .foregroundColor(Color.white)
-                HStack {
-                    Spacer()
-                    Image(systemName: "binoculars.fill")
-                    Image(systemName: "fork.knife")
-                }.foregroundColor(.orange).font(.caption)
-            }.padding(20.0).background(Rectangle().foregroundColor(.gray).cornerRadius(15.0).shadow(radius: 15.0)).padding(20.0)
+            }
         }
-    }
-}
-
-#Preview {
-    MenuView()
-}
+        
+        #Preview {
+            MenuView()
+        }
