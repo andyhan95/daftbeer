@@ -8,11 +8,10 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var csvLoader = CSVLoader()
+    
     var body: some View {
-        VStack {
-            Text("Hello")
-        }
-        .padding()
+        BreweryMapView(csvLoader: csvLoader)
     }
 }
 
