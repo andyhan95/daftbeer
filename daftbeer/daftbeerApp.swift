@@ -11,7 +11,7 @@ import SwiftUI
 struct daftbeerApp: App {
     var body: some Scene {
         WindowGroup {
-            MenuView()
+            ContentView()
         }
     }
 }
