@@ -14,10 +14,16 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        
+        // Get the current authorization status
+        locationStatus = locationManager.authorizationStatus
     }
     
     func requestLocationPermission() {
-        showLocationPrompt = true
+        // Only show the prompt if permission hasn't been determined yet
+        if locationStatus == .notDetermined {
+            showLocationPrompt = true
+        }
     }
     
     func proceedWithLocationRequest() {

@@ -7,7 +7,7 @@ struct ClusterAnnotationView: View {
     
     var body: some View {
         if cluster.isCluster {
-            // Cluster view
+            // Cluster view - optimized for performance
             ZStack {
                 Circle()
                     .fill(isSelected ? .orange : .blue)

@@ -16,10 +16,11 @@ struct BreweryMapView: View {
     @State private var showFilterSearch = false
     @State private var showProfileSettings = false
     @State private var hasShownLocationPrompt = false
+    @State private var hasAttemptedInitialCentering = false
     
     var body: some View {
         ZStack {
-            Map(coordinateRegion: $region, annotationItems: clusteringManager.clusteredBreweries) { cluster in
+            Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: clusteringManager.clusteredBreweries) { cluster in
                 MapAnnotation(coordinate: cluster.coordinate) {
                     ClusterAnnotationView(
                         cluster: cluster,
@@ -42,6 +43,19 @@ struct BreweryMapView: View {
             }
             .onChange(of: csvLoader.breweries.count) { _ in
                 updateClusters()
+            }
+            .onChange(of: locationManager.userLocation) { newLocation in
+                // Center on user location when it becomes available (if we haven't attempted centering yet)
+                if !hasAttemptedInitialCentering && 
+                   newLocation != nil &&
+                   (locationManager.locationStatus == .authorizedWhenInUse || locationManager.locationStatus == .authorizedAlways) {
+                    hasAttemptedInitialCentering = true
+                    
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        region.center = newLocation!.coordinate
+                        region.span = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    }
+                }
             }
             
             // Floating buttons
@@ -131,7 +145,7 @@ struct BreweryMapView: View {
                     Button(action: {
                         showDebugInfo.toggle()
                     }) {
-                        Image(systemName: "info.circle")
+                        Image(systemName: "wrench.adjustable")
                             .font(.title2)
                             .foregroundColor(.white)
                             .padding(8)
@@ -177,11 +191,28 @@ struct BreweryMapView: View {
                 csvLoader.loadBreweries()
             }
             
-            // Show location prompt on first launch
-            if !hasShownLocationPrompt {
+            // Show location prompt only if permission hasn't been granted yet
+            if !hasShownLocationPrompt && locationManager.locationStatus == .notDetermined {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     locationManager.requestLocationPermission()
                     hasShownLocationPrompt = true
+                }
+            }
+            
+            // Start location updates if permission is already granted
+            locationManager.startLocationUpdates()
+            
+            // Center on user location if permission is already granted and we haven't attempted centering yet
+            if !hasAttemptedInitialCentering && 
+               (locationManager.locationStatus == .authorizedWhenInUse || locationManager.locationStatus == .authorizedAlways) {
+                hasAttemptedInitialCentering = true
+                
+                // If we already have a location, center immediately
+                if let userLocation = locationManager.userLocation {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        region.center = userLocation.coordinate
+                        region.span = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    }
                 }
             }
         }
@@ -245,7 +276,7 @@ struct BreweryMapView: View {
     
     private func scheduleRegionUpdate() {
         regionUpdateTimer?.invalidate()
-        regionUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+        regionUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: false) { _ in
             updateClusters()
         }
     }
@@ -288,6 +319,8 @@ struct BreweryMapView: View {
             return 0.005
         }
     }
+    
+
 }
 
 #Preview {

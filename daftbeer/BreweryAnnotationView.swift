@@ -8,7 +8,7 @@ struct BreweryAnnotationView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Beer icon
-            Image(systemName: "mug.fill")
+            Image(systemName: "wineglass")
                 .font(.system(size: 20))
                 .foregroundColor(isSelected ? .white : .orange)
                 .background(
